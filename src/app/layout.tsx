@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { createClient } from "@/lib/supabase/server";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -37,6 +38,7 @@ export default async function RootLayout({
           }
         />
         <main>{children}</main>
+        <Analytics />
         <footer className="border-t border-gray-200 bg-white py-6 mt-auto">
           <p className="text-center text-sm text-gray-500">
             © 2026 Pritchard Commercial. All rights reserved.
