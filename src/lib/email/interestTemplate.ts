@@ -34,14 +34,6 @@ export function buildInterestEmail(data: InterestEmailData): string {
           ${v.vehicleName || "—"}
         </td>
       </tr>
-      <tr>
-        <td style="padding: 0 32px 4px 32px; font-size: 13px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; vertical-align: top;">
-          Stock #
-        </td>
-        <td style="padding: 0 32px 4px 32px; font-size: 14px; color: #374151; vertical-align: top;">
-          ${v.stockNumber || "—"}
-        </td>
-      </tr>
       ${
         v.bodyApplication
           ? `<tr>
