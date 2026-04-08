@@ -1,15 +1,44 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { Vehicle, VehicleFilters, FilterOptions } from "@/types";
 import { VehicleCard } from "@/components/VehicleCard";
 import { FilterPanel } from "@/components/FilterPanel";
 import { ReserveModal } from "@/components/ReserveModal";
-import { Loader2, PackageSearch, LayoutGrid, List, Copy, Check, X } from "lucide-react";
+import { Loader2, PackageSearch, LayoutGrid, List, Copy, Check, X, SlidersHorizontal } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const PAGE_SIZE = 20;
 const LIST_PAGE_SIZE = 12;
+
+// Cascading filter helpers
+type VehicleField = {
+  year: string | null; oem: string | null; color: string | null;
+  bodyApplication: string | null; fuelType: string | null; orderStatus: string | null;
+  location: string | null;
+};
+
+function getAvailabilityString(status: string | null): string {
+  const v = (status ?? "").toLowerCase();
+  if (v === "delivered") return "On Ground";
+  if (v.includes("transit")) return "In Transit";
+  if (v.includes("scheduled") && !v.includes("unscheduled")) return "In Build";
+  return "Unscheduled";
+}
+
+function matchesFilters(v: VehicleField, filters: VehicleFilters, exclude?: keyof VehicleFilters): boolean {
+  if (exclude !== "years"            && filters.years?.length            && !filters.years.includes(v.year ?? ""))            return false;
+  if (exclude !== "oems"             && filters.oems?.length             && !filters.oems.includes(v.oem ?? ""))              return false;
+  if (exclude !== "colors"           && filters.colors?.length           && !filters.colors.includes(v.color ?? ""))          return false;
+  if (exclude !== "bodyApplications" && filters.bodyApplications?.length && !filters.bodyApplications.includes(v.bodyApplication ?? "")) return false;
+  if (exclude !== "fuelTypes"        && filters.fuelTypes?.length        && !filters.fuelTypes.includes(v.fuelType ?? ""))    return false;
+  if (exclude !== "availabilities"   && filters.availabilities?.length   && !filters.availabilities.includes(getAvailabilityString(v.orderStatus))) return false;
+  return true;
+}
+
+function uniqueSorted(arr: (string | null)[]): string[] {
+  return [...new Set(arr.filter((v): v is string => !!v && v.trim() !== ""))].sort();
+}
 
 // List view columns
 const COL_DEFS = [
@@ -67,6 +96,8 @@ export default function HomePage() {
   const [page, setPage]                   = useState(1);
   const [hasMore, setHasMore]             = useState(false);
   const [listPage, setListPage]           = useState(1);
+  const [vehicleFieldsBase, setVehicleFieldsBase] = useState<VehicleField[]>([]);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [isAuthenticated]                 = useState(false);
   const [viewMode, setViewMode]           = useState<"card" | "list">("list");
   const [detailVehicle, setDetailVehicle] = useState<{ vehicle: Vehicle; qty: number } | null>(null);
@@ -83,6 +114,24 @@ export default function HomePage() {
   // List view pagination
   const listTotalPages = Math.max(1, Math.ceil(allGrouped.length / LIST_PAGE_SIZE));
   const listDisplayed  = allGrouped.slice((listPage - 1) * LIST_PAGE_SIZE, listPage * LIST_PAGE_SIZE);
+
+  // Cascading filter options — each dimension shows only values compatible with other active filters
+  const dynamicFilterOptions = useMemo((): FilterOptions => {
+    if (vehicleFieldsBase.length === 0) return filterOptions;
+    const hasActiveFilters = Object.entries(filters).some(([k, v]) =>
+      k !== "search" && Array.isArray(v) && v.length > 0
+    );
+    if (!hasActiveFilters) return filterOptions;
+    return {
+      years:            uniqueSorted(vehicleFieldsBase.filter(v => matchesFilters(v, filters, "years")).map(v => v.year)),
+      oems:             uniqueSorted(vehicleFieldsBase.filter(v => matchesFilters(v, filters, "oems")).map(v => v.oem)),
+      colors:           uniqueSorted(vehicleFieldsBase.filter(v => matchesFilters(v, filters, "colors")).map(v => v.color)),
+      bodyApplications: uniqueSorted(vehicleFieldsBase.filter(v => matchesFilters(v, filters, "bodyApplications")).map(v => v.bodyApplication)),
+      fuelTypes:        uniqueSorted(vehicleFieldsBase.filter(v => matchesFilters(v, filters, "fuelTypes")).map(v => v.fuelType)),
+      locations:        filterOptions.locations,
+      statuses:         filterOptions.statuses,
+    };
+  }, [vehicleFieldsBase, filters, filterOptions]);
 
   const toggleRow = (key: string) => {
     setSelectedKeys((prev) => {
@@ -194,6 +243,7 @@ export default function HomePage() {
       setListPage(1);
       setHasMore(grouped.length > PAGE_SIZE);
       if (data.filterOptions) setFilterOptions(data.filterOptions);
+      if (data.vehicleFields) setVehicleFieldsBase(data.vehicleFields);
     } catch (err) {
       console.error("Failed to fetch vehicles:", err);
     } finally {
@@ -202,6 +252,7 @@ export default function HomePage() {
   }, [filters]);
 
   useEffect(() => { fetchVehicles(); }, [fetchVehicles]);
+
 
   // Supabase Realtime
   useEffect(() => {
@@ -241,25 +292,37 @@ export default function HomePage() {
     <div className="flex min-h-screen">
       {/* Sidebar */}
       <aside className="hidden lg:flex flex-col w-72 xl:w-80 shrink-0 border-r border-[#1a1617] sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto" style={{ backgroundColor: "#231F20" }}>
-        <FilterPanel filters={filters} filterOptions={filterOptions} onChange={setFilters} />
+        <FilterPanel filters={filters} filterOptions={dynamicFilterOptions} onChange={setFilters} />
       </aside>
 
       {/* Main Content */}
       <div className="flex-1 min-w-0 px-4 sm:px-6 py-6">
         {/* Page Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div className="shrink-0 min-w-[120px]">
+        <div className="mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {!loading && (
-              <div className="text-left">
+              <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Total Vehicles</p>
                 <p className="text-2xl font-bold text-[#1a3a6e] leading-tight">
                   {allGrouped.reduce((sum, { qty }) => sum + qty, 0).toLocaleString()}
                 </p>
               </div>
             )}
+            {/* Mobile filter button */}
+            <button
+              className="lg:hidden flex items-center gap-2 px-3 py-2 bg-[#1a3a6e] text-white rounded-lg text-sm font-semibold"
+              onClick={() => setMobileFiltersOpen(true)}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Filters
+              {Object.entries(filters).filter(([k, v]) => k !== "search" && Array.isArray(v) && (v as string[]).length > 0).length > 0 && (
+                <span className="bg-white text-[#1a3a6e] rounded-full w-5 h-5 text-xs font-bold flex items-center justify-center">
+                  {Object.entries(filters).filter(([k, v]) => k !== "search" && Array.isArray(v) && (v as string[]).length > 0).length}
+                </span>
+              )}
+            </button>
           </div>
 
-          <div className="flex-1" />
           <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 shrink-0">
             <button
               onClick={() => setViewMode("card")}
@@ -276,10 +339,29 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Mobile Filters */}
-        <div className="lg:hidden mb-4">
-          <FilterPanel filters={filters} filterOptions={filterOptions} onChange={setFilters} />
-        </div>
+        {/* Mobile Filter Drawer */}
+        {mobileFiltersOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div className="absolute inset-0 bg-black/60" onClick={() => setMobileFiltersOpen(false)} />
+            <div className="absolute bottom-0 left-0 right-0 rounded-t-2xl max-h-[85vh] overflow-y-auto" style={{ backgroundColor: "#231F20" }}>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 sticky top-0" style={{ backgroundColor: "#231F20" }}>
+                <h2 className="text-white font-bold text-sm">Filters</h2>
+                <button onClick={() => setMobileFiltersOpen(false)} className="text-gray-400 hover:text-white p-1">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <FilterPanel filters={filters} filterOptions={dynamicFilterOptions} onChange={(f) => { setFilters(f); }} />
+              <div className="px-4 pb-6 pt-2">
+                <button
+                  onClick={() => setMobileFiltersOpen(false)}
+                  className="w-full py-3 bg-[#1a3a6e] text-white font-semibold rounded-xl text-sm"
+                >
+                  Show Results ({allGrouped.length})
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Active Filter Tags */}
         {(() => {
@@ -291,7 +373,7 @@ export default function HomePage() {
           }
           if (tagEntries.length === 0) return null;
           return (
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-1.5 mb-4">
               {tagEntries.map(({ key, value }) => (
                 <span key={`${key}-${value}`} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-200 text-sm px-3 py-1 rounded-full">
                   {value}
@@ -329,7 +411,7 @@ export default function HomePage() {
             </div>
           ) : viewMode === "card" ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5">
                 {displayed.map(({ vehicle, qty }) => (
                   <VehicleCard
                     key={rowKey(vehicle)}
@@ -466,7 +548,7 @@ export default function HomePage() {
 
               {/* Pagination */}
               {listTotalPages > 1 && (
-                <div className="flex items-center justify-between mt-4 px-1">
+                <div className="flex flex-col sm:flex-row items-center justify-between mt-4 px-1 gap-3">
                   <p className="text-xs text-gray-500">
                     Showing {(listPage - 1) * LIST_PAGE_SIZE + 1}–{Math.min(listPage * LIST_PAGE_SIZE, allGrouped.length)} of {allGrouped.length} vehicles
                   </p>
@@ -536,7 +618,7 @@ export default function HomePage() {
                 [{ label: "Order #", value: detailVehicle.vehicle.orderNumber },        { label: "Location",         value: detailVehicle.vehicle.location }],
                 [{ label: "Recall Status", value: detailVehicle.vehicle.recalls },      { label: "OEM Status",       value: detailVehicle.vehicle.orderStatus }],
               ] as { label: string; value: string | null; small?: boolean }[][]).map((row, i) => (
-                <div key={i} className="grid grid-cols-2 gap-x-6 px-5 py-3">
+                <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 px-5 py-3">
                   {row.map(({ label, value, small = false }) => (
                     <div key={label}>
                       <p className="text-xs text-[#1a3a6e] font-medium tracking-wide">{label}</p>
@@ -570,7 +652,7 @@ export default function HomePage() {
 
       {/* Floating multi-select bar */}
       {viewMode === "list" && selectedKeys.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 bg-[#1a3a6e] text-white px-5 py-3 rounded-full shadow-xl">
+        <div className="fixed bottom-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-auto z-40 flex items-center gap-3 bg-[#1a3a6e] text-white px-5 py-3 rounded-full shadow-xl justify-center">
           <span className="text-sm font-semibold">{selectedKeys.size} vehicle{selectedKeys.size > 1 ? "s" : ""} selected</span>
           <button onClick={openMultiInterest}
             className="bg-white text-[#1a3a6e] text-sm font-bold px-4 py-1.5 rounded-full hover:bg-blue-50 transition-colors">
