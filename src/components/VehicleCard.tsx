@@ -156,7 +156,7 @@ export function VehicleCard({ vehicle, qty = 1, onReserved }: VehicleCardProps) 
             </div>
 
             <div className="divide-y divide-gray-100 text-sm">
-              {[
+              {(([
                 [{ label: "Stock #",   value: vehicle.stockNumber },        { label: "VIN",              value: vehicle.vin, small: true }],
                 [{ label: "PAC-QID",   value: vehicle.pacQid },             { label: "OEM",              value: vehicle.oem }],
                 [{ label: "Year",      value: vehicle.year },               { label: "Body Application", value: vehicle.bodyApplication }],
@@ -164,7 +164,7 @@ export function VehicleCard({ vehicle, qty = 1, onReserved }: VehicleCardProps) 
                 [{ label: "Order Date",value: vehicle.orderDate },          { label: "Order Type",       value: vehicle.orderType }],
                 [{ label: "Order #",   value: vehicle.orderNumber },        { label: "Location",         value: vehicle.location }],
                 [{ label: "Recall Status", value: vehicle.recalls },        { label: "OEM Status",       value: vehicle.orderStatus }],
-              ].map((row, i) => (
+              ]) as { label: string; value: string | null; small?: boolean }[][]).map((row, i) => (
                 <div key={i} className="grid grid-cols-2 gap-x-6 px-5 py-3">
                   {row.map(({ label, value, small = false }) => (
                     <div key={label}>
