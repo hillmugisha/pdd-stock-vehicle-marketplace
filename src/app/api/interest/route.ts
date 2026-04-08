@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     const { error } = await resend.emails.send({
       from:    "PDD Stock <onboarding@resend.dev>",
-      to:      ["hill.mugisha@pritchards.com"],
+      to:      ["hill3563@gmail.com"],
       replyTo: email,
       subject: "Interest in PDD Stock",
       html,
