@@ -177,13 +177,12 @@ export function FilterPanel({ filters, filterOptions, onChange }: FilterPanelPro
           { label: "Year",             key: "years"            as const, options: filterOptions.years },
           { label: "Color",            key: "colors"           as const, options: filterOptions.colors },
           { label: "Fuel Type",        key: "fuelTypes"        as const, options: filterOptions.fuelTypes },
-        ].map(({ label, key, options, searchable }, i, arr) => (
+        ].map(({ label, key, options }, i, arr) => (
           <div key={key}>
             <MultiSelect
               label={label}
               selected={(filters[key] as string[]) || []}
               options={options}
-              searchable={searchable}
               onChange={(v) => onChange({ ...filters, [key]: v.length ? v : undefined })}
             />
             {i < arr.length - 1 && <div className="border-b border-gray-600 mt-3" />}
