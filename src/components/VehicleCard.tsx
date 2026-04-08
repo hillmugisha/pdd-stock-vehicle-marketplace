@@ -166,7 +166,7 @@ export function VehicleCard({ vehicle, qty = 1, onReserved }: VehicleCardProps) 
                 [{ label: "Recall Status", value: vehicle.recalls },        { label: "OEM Status",       value: vehicle.orderStatus }],
               ].map((row, i) => (
                 <div key={i} className="grid grid-cols-2 gap-x-6 px-5 py-3">
-                  {row.map(({ label, value, small }) => (
+                  {row.map(({ label, value, small = false }) => (
                     <div key={label}>
                       <p className="text-xs text-[#1a3a6e] font-medium tracking-wide">{label}</p>
                       <p className={`font-semibold text-gray-800 mt-0.5 ${small ? "break-all text-xs" : ""}`}>{value || "-"}</p>
