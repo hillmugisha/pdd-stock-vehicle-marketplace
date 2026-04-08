@@ -99,7 +99,7 @@ export default function HomePage() {
   const [vehicleFieldsBase, setVehicleFieldsBase] = useState<VehicleField[]>([]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [isAuthenticated]                 = useState(false);
-  const [viewMode, setViewMode]           = useState<"card" | "list">("list");
+  const [viewMode, setViewMode]           = useState<"card" | "list">("card");
   const [detailVehicle, setDetailVehicle] = useState<{ vehicle: Vehicle; qty: number } | null>(null);
   const [reserveVehicle, setReserveVehicle] = useState<{ vehicle: Vehicle; qty: number } | null>(null);
   const [copiedKey, setCopiedKey]         = useState<string | null>(null);
