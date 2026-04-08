@@ -9,14 +9,13 @@ interface VehicleData {
   id: string;
   year: string | null;
   oem: string | null;
-  model: string | null;
+  specs: string | null;
+  bodyApplication: string | null;
   stockNumber: string;
   color: string | null;
-  drivetrain: string | null;
-  msrp: string | null;
+  salePrice: string | null;
   orderStatus: string | null;
   location: string | null;
-  specId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -132,7 +131,7 @@ function ReservationCard({
   cancelling?: boolean;
 }) {
   const { vehicle } = reservation;
-  const title = [vehicle.year, vehicle.oem, vehicle.model].filter(Boolean).join(" ");
+  const title = [vehicle.year, vehicle.oem, vehicle.bodyApplication || vehicle.specs].filter(Boolean).join(" ");
   const isActive = reservation.status === "active";
 
   return (
@@ -199,7 +198,7 @@ function ReservationCard({
 
           <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500">
             {vehicle.color && <span>Color: {vehicle.color}</span>}
-            {vehicle.msrp && <span>MSRP: {formatMSRP(vehicle.msrp)}</span>}
+            {vehicle.salePrice && <span>Price: {vehicle.salePrice}</span>}
             {reservation.reservedFor && <span>For: {reservation.reservedFor}</span>}
             {reservation.notes && <span>Notes: {reservation.notes}</span>}
           </div>
