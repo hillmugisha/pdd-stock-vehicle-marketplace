@@ -9,6 +9,7 @@ import { Loader2, PackageSearch, LayoutGrid, List, Copy, Check, X } from "lucide
 import { createClient } from "@/lib/supabase/client";
 
 const PAGE_SIZE = 20;
+const LIST_PAGE_SIZE = 12;
 
 // List view columns
 const COL_DEFS = [
@@ -65,6 +66,7 @@ export default function HomePage() {
   const [loadingMore, setLoadingMore]     = useState(false);
   const [page, setPage]                   = useState(1);
   const [hasMore, setHasMore]             = useState(false);
+  const [listPage, setListPage]           = useState(1);
   const [isAuthenticated]                 = useState(false);
   const [viewMode, setViewMode]           = useState<"card" | "list">("list");
   const [detailVehicle, setDetailVehicle] = useState<{ vehicle: Vehicle; qty: number } | null>(null);
@@ -78,6 +80,10 @@ export default function HomePage() {
   // Row key — group by PAC-QID
   const rowKey = (v: Vehicle) => v.pacQid ?? v.stockNumber;
 
+  // List view pagination
+  const listTotalPages = Math.max(1, Math.ceil(allGrouped.length / LIST_PAGE_SIZE));
+  const listDisplayed  = allGrouped.slice((listPage - 1) * LIST_PAGE_SIZE, listPage * LIST_PAGE_SIZE);
+
   const toggleRow = (key: string) => {
     setSelectedKeys((prev) => {
       const next = new Set(prev);
@@ -86,10 +92,11 @@ export default function HomePage() {
     });
   };
   const toggleAll = () => {
-    if (selectedKeys.size === displayed.length) setSelectedKeys(new Set());
-    else setSelectedKeys(new Set(displayed.map(({ vehicle }) => rowKey(vehicle))));
+    const current = viewMode === "list" ? listDisplayed : displayed;
+    if (selectedKeys.size === current.length) setSelectedKeys(new Set());
+    else setSelectedKeys(new Set(current.map(({ vehicle }) => rowKey(vehicle))));
   };
-  const selectedItems = displayed.filter(({ vehicle }) => selectedKeys.has(rowKey(vehicle)));
+  const selectedItems = (viewMode === "list" ? listDisplayed : displayed).filter(({ vehicle }) => selectedKeys.has(rowKey(vehicle)));
   const openMultiInterest = () => {
     if (selectedItems.length === 0) return;
     const [primary, ...rest] = selectedItems;
@@ -184,6 +191,7 @@ export default function HomePage() {
       setAllGrouped(grouped);
       setDisplayed(grouped.slice(0, PAGE_SIZE));
       setPage(1);
+      setListPage(1);
       setHasMore(grouped.length > PAGE_SIZE);
       if (data.filterOptions) setFilterOptions(data.filterOptions);
     } catch (err) {
@@ -345,7 +353,7 @@ export default function HomePage() {
           ) : (
             /* List View */
             <>
-              <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+              <div className="overflow-x-scroll rounded-xl border border-gray-200 shadow-sm">
                 <table style={{ tableLayout: "fixed", width: colWidths.reduce((a, b) => a + b, 0) }} className="text-sm">
                   <colgroup>
                     {colWidths.map((w, i) => <col key={i} style={{ width: w }} />)}
@@ -356,8 +364,8 @@ export default function HomePage() {
                         <input
                           type="checkbox"
                           className="rounded border-gray-300 text-[#1a3a6e] focus:ring-[#1a3a6e] cursor-pointer"
-                          checked={displayed.length > 0 && selectedKeys.size === displayed.length}
-                          ref={(el) => { if (el) el.indeterminate = selectedKeys.size > 0 && selectedKeys.size < displayed.length; }}
+                          checked={listDisplayed.length > 0 && selectedKeys.size === listDisplayed.length}
+                          ref={(el) => { if (el) el.indeterminate = selectedKeys.size > 0 && selectedKeys.size < listDisplayed.length; }}
                           onChange={toggleAll}
                         />
                         <ResizeHandle onMouseDown={(e) => startResize(0, e)} />
@@ -379,7 +387,7 @@ export default function HomePage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {displayed.map(({ vehicle, qty }) => {
+                    {listDisplayed.map(({ vehicle, qty }) => {
                       const title = vehicle.specs || [vehicle.year, vehicle.oem].filter(Boolean).join(" ");
                       return (
                         <tr
@@ -456,13 +464,48 @@ export default function HomePage() {
                 </table>
               </div>
 
-              <div ref={sentinelRef} className="h-4" />
-              {hasMore && (
-                <div className="flex justify-center mt-6">
-                  <button onClick={loadMore} disabled={loadingMore}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-[#1a3a6e] hover:bg-[#142d56] text-white text-sm font-semibold rounded-lg disabled:opacity-60">
-                    {loadingMore ? <><Loader2 className="w-4 h-4 animate-spin" /> Loading...</> : `Load More (${allGrouped.length - displayed.length} remaining)`}
-                  </button>
+              {/* Pagination */}
+              {listTotalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 px-1">
+                  <p className="text-xs text-gray-500">
+                    Showing {(listPage - 1) * LIST_PAGE_SIZE + 1}–{Math.min(listPage * LIST_PAGE_SIZE, allGrouped.length)} of {allGrouped.length} vehicles
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => { setListPage((p) => Math.max(1, p - 1)); setSelectedKeys(new Set()); }}
+                      disabled={listPage === 1}
+                      className="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      ← Prev
+                    </button>
+                    {Array.from({ length: listTotalPages }, (_, i) => i + 1)
+                      .filter((p) => p === 1 || p === listTotalPages || Math.abs(p - listPage) <= 1)
+                      .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+                        if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("...");
+                        acc.push(p);
+                        return acc;
+                      }, [])
+                      .map((p, i) =>
+                        p === "..." ? (
+                          <span key={`ellipsis-${i}`} className="px-2 text-gray-400 text-xs">…</span>
+                        ) : (
+                          <button
+                            key={p}
+                            onClick={() => { setListPage(p as number); setSelectedKeys(new Set()); }}
+                            className={`w-8 h-8 text-xs font-semibold rounded-md ${p === listPage ? "bg-[#1a3a6e] text-white" : "border border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+                          >
+                            {p}
+                          </button>
+                        )
+                      )}
+                    <button
+                      onClick={() => { setListPage((p) => Math.min(listTotalPages, p + 1)); setSelectedKeys(new Set()); }}
+                      disabled={listPage === listTotalPages}
+                      className="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Next →
+                    </button>
+                  </div>
                 </div>
               )}
             </>

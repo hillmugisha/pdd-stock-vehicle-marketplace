@@ -25,7 +25,7 @@ export function AnnouncementBanner() {
   return (
     <div className="w-full bg-yellow-400 text-gray-900 flex items-center justify-center px-4 py-2 text-xs sm:text-sm font-medium relative">
       <p className="text-center pr-6">
-        Inventory is refreshed daily to reflect the latest availability. Reach us at{" "}
+        Inventory is refreshed weekly to reflect the latest availability. Reach us at{" "}
         <a href="mailto:pdd@pritchards.com" className="underline font-semibold hover:text-gray-700">
           pdd@pritchards.com
         </a>{" "}
