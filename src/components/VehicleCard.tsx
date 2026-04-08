@@ -45,7 +45,7 @@ export function VehicleCard({ vehicle, qty = 1, onReserved }: VehicleCardProps) 
               Qty: {qty}
             </span>
             <span className="text-xs font-semibold text-[#1a3a6e] border border-[#1a3a6e]/30 bg-[#1a3a6e]/5 px-2.5 py-1 rounded-full">
-              Call/Email for Price
+              Email for Price
             </span>
           </div>
 
