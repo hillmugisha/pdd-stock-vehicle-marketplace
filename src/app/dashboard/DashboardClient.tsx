@@ -152,7 +152,7 @@ function ReservationCard({
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-3 mt-3 text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3 mt-3 text-sm">
             <div className="flex items-start gap-1.5">
               <Hash className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
               <div>

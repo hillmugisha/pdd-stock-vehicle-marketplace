@@ -144,7 +144,7 @@ export function VehicleCard({ vehicle, qty = 1, onReserved }: VehicleCardProps) 
           onClick={() => setShowMoreModal(false)}
         >
           <div
-            className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden"
+            className="bg-white rounded-xl shadow-xl w-full max-w-md mx-2 sm:mx-4 overflow-hidden max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 px-5 py-4 flex items-center justify-between">
