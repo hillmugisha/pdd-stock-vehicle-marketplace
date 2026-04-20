@@ -200,13 +200,13 @@ export function ReserveModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:w-auto sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         {success ? (
           <div className="flex flex-col items-center py-8 gap-3 text-center">
             <CheckCircle2 className="w-14 h-14 text-green-500" />
             <h2 className="text-xl font-bold text-gray-900">Interest Submitted!</h2>
             <p className="text-gray-500 text-sm max-w-xs">
-              Brady Christianson will be in touch with you shortly regarding your{" "}
+              The PDD team will be in touch with you shortly regarding your{" "}
               <span className="font-semibold text-gray-700">
                 {totalVehicles} vehicle{totalVehicles > 1 ? "s" : ""}
               </span>.

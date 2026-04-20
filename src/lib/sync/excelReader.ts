@@ -4,7 +4,7 @@ import {
   SKIP_COLUMNS,
   STOCK_NUMBER_COLUMN,
   STOCK_NUMBER_COLUMN_LEGACY,
-  PARTNER_FILTER,
+  PARTNER_FILTERS,
   normalizeValue,
 } from "./fieldMap";
 
@@ -35,11 +35,11 @@ export function readExcelFile(filePath: string): ReadResult {
     const raw = rawRows[i];
     const rowNum = i + 2; // 1-indexed + header row
 
-    // ── Filter: only PARTNER = "STOCK - PDD" ────────────────────────────────
+    // ── Filter: only allowed PARTNER values ─────────────────────────────────
     const partnerKey = Object.keys(raw).find((k) => k.trim() === "PARTNER") ?? null;
     const partnerVal = partnerKey ? String(raw[partnerKey] ?? "").trim() : "";
-    if (partnerVal !== PARTNER_FILTER) {
-      skippedRows.push({ rowIndex: rowNum, reason: `PARTNER "${partnerVal}" ≠ "${PARTNER_FILTER}"` });
+    if (!PARTNER_FILTERS.has(partnerVal)) {
+      skippedRows.push({ rowIndex: rowNum, reason: `PARTNER "${partnerVal}" not in allowed partners` });
       continue;
     }
 

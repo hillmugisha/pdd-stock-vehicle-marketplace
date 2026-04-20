@@ -71,18 +71,9 @@ export function buildInterestEmail(data: InterestEmailData): string {
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
 
-          <!-- TEST BANNER -->
-          <tr>
-            <td style="background-color: #fbbf24; padding: 14px 24px; border-radius: 8px 8px 0 0; text-align: center;">
-              <p style="margin: 0; font-size: 14px; font-weight: 700; color: #1c1917; letter-spacing: 0.01em;">
-                ⚠️ This is only a Test email. Testing the PDD Stock Inventory Website.
-              </p>
-            </td>
-          </tr>
-
           <!-- HEADER -->
           <tr>
-            <td style="background-color: #1a3a6e; padding: 24px 32px;">
+            <td style="background-color: #1a3a6e; padding: 24px 32px; border-radius: 8px 8px 0 0;">
               <p style="margin: 0; font-size: 12px; font-weight: 600; color: #93c5fd; text-transform: uppercase; letter-spacing: 0.1em;">PDD Stock Inventory</p>
               <h1 style="margin: 6px 0 0 0; font-size: 22px; font-weight: 700; color: #ffffff;">New Interest Submission</h1>
             </td>

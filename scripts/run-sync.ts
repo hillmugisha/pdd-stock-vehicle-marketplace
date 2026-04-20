@@ -12,14 +12,28 @@
  */
 
 import * as dotenv from "dotenv";
+import * as fs from "fs";
 import * as path from "path";
 
 // Load .env from the marketplace directory
 dotenv.config({ path: path.join(__dirname, "..", ".env") });
 
-const EXCEL_FILE_PATH =
-  process.env.EXCEL_FILE_PATH ??
-  path.resolve(__dirname, "..", "..", "PDD_Status_Report.xlsx");
+function resolveExcelPath(): string {
+  if (process.env.EXCEL_FILE_PATH) return process.env.EXCEL_FILE_PATH;
+  const dir = path.resolve(__dirname, "..", "..", "Prod Data Files");
+  const files = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith(".xlsx") && !f.startsWith("~$"));
+  if (files.length === 0) throw new Error(`No xlsx files found in ${dir}`);
+  files.sort(
+    (a, b) =>
+      fs.statSync(path.join(dir, b)).mtimeMs -
+      fs.statSync(path.join(dir, a)).mtimeMs
+  );
+  return path.join(dir, files[0]);
+}
+
+const EXCEL_FILE_PATH = resolveExcelPath();
 
 async function main() {
   console.log(`[sync] Starting at ${new Date().toISOString()}`);

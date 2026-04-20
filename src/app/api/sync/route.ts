@@ -22,7 +22,7 @@ import path from "path";
 
 const EXCEL_FILE_PATH =
   process.env.EXCEL_FILE_PATH ??
-  path.join(process.cwd(), "..", "PDD_Stock_4_6_26.xlsx");
+  path.join(process.cwd(), "..", "Prod Data Files", "PDD Status Report 4_20_26.xlsx");
 
 const SYNC_SECRET = process.env.SYNC_SECRET ?? "";
 

@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     const andConditions: Prisma.VehicleWhereInput[] = [
       { isActive: true },
-      { partner: "STOCK - PDD" },
+      { partner: { in: ["STOCK - PDD", "STOCK - PDD - MOD & TRANS CL"] } },
     ];
 
     if (years.length > 0)            andConditions.push({ year:            { in: years } });
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
 
     // Filter options from full STOCK-PDD set
     const allVehicles = await prisma.vehicle.findMany({
-      where: { isActive: true, partner: "STOCK - PDD" },
+      where: { isActive: true, partner: { in: ["STOCK - PDD", "STOCK - PDD - MOD & TRANS CL"] } },
       select: { year: true, oem: true, color: true, bodyApplication: true, location: true, orderStatus: true, fuelType: true },
     });
 
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
       statuses:         unique(allVehicles.map((v) => v.orderStatus)),
     };
 
-    return NextResponse.json({ vehicles: vehiclesWithStatus, filterOptions });
+    return NextResponse.json({ vehicles: vehiclesWithStatus, filterOptions, vehicleFields: allVehicles });
   } catch (error) {
     console.error("Error fetching vehicles:", error);
     return NextResponse.json({ error: "Failed to fetch vehicles" }, { status: 500 });

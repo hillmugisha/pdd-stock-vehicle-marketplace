@@ -32,8 +32,11 @@ export const SKIP_COLUMNS = new Set<string>([]);
 export const STOCK_NUMBER_COLUMN = "STOCK #";
 export const STOCK_NUMBER_COLUMN_LEGACY = "Stock #";
 
-// Only import rows where PARTNER equals this value
-export const PARTNER_FILTER = "STOCK - PDD";
+// Only import rows where PARTNER is one of these values
+export const PARTNER_FILTERS = new Set([
+  "STOCK - PDD",
+  "STOCK - PDD - MOD & TRANS CL",
+]);
 
 // ---------------------------------------------------------------------------
 // Normalisation helpers
